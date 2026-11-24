@@ -1,0 +1,10 @@
+2026-11-24 10:00:00 [INFO] Server started
+2026-11-24 10:01:12 [DEBUG] Cache miss for key user:42
+2026-11-24 10:02:30 [WARN] Disk usage above 90%
+2026-11-24 10:03:45 [ERROR] Database connection failed
+2026-11-24 10:04:01 [ERROR] Database connection failed
+2026-11-24 10:05:22 [INFO] Retrying database connection
+2026-11-24 10:06:10 [INFO] Database connection restored
+2026-11-24 10:07:55 [FATAL] Out of memory, shutting down
+this line is not a log entry
+2026-11-24 10:08:31 [INFO] Server stopped
