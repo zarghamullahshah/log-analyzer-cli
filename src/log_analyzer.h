@@ -49,4 +49,13 @@ Summary analyze(const std::vector<std::string>& lines, std::size_t topN = 10);
 // Keep only entries at or above `minLevel`.
 std::vector<LogEntry> filterByLevel(const std::vector<LogEntry>& entries, Level minLevel);
 
+// Render a summary as a JSON object, e.g.:
+//   {"total_lines": 10, "parsed_lines": 9, "malformed_lines": 1,
+//    "by_level": {"TRACE": 0, "DEBUG": 1, "INFO": 4, "WARN": 1, "ERROR": 2, "FATAL": 1},
+//    "top_messages": [{"message": "Database connection failed", "count": 2}]}
+// Every level is always present (0 when unseen) so the JSON reports exactly
+// the same numbers as the human-readable report. With includeMessages=false
+// the top_messages array is emitted empty.
+std::string summaryToJson(const Summary& summary, bool includeMessages = true);
+
 }  // namespace loganalyzer

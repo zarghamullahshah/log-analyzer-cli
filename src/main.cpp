@@ -23,6 +23,8 @@ void printUsage(const char* program) {
               << "  --top <N>         Show the N most frequent messages (default 10,\n"
               << "                      0 shows all)\n"
               << "  --summary-only    Print only the per-level counts, no messages\n"
+              << "  --json            Print the same summary as JSON on stdout,\n"
+              << "                      instead of the human-readable report\n"
               << "  -h, --help        Show this help\n";
 }
 
@@ -40,6 +42,7 @@ int main(int argc, char* argv[]) {
     std::optional<Level> minLevel;
     std::size_t topN = 10;
     bool summaryOnly = false;
+    bool jsonOutput = false;
 
     for (int i = 1; i < argc; ++i) {
         const std::string arg = argv[i];
@@ -48,6 +51,8 @@ int main(int argc, char* argv[]) {
             return 0;
         } else if (arg == "--summary-only") {
             summaryOnly = true;
+        } else if (arg == "--json") {
+            jsonOutput = true;
         } else if (arg == "--level" || arg == "--top") {
             if (i + 1 >= argc) return fail("missing value for " + arg);
             const std::string value = argv[++i];
@@ -98,6 +103,12 @@ int main(int argc, char* argv[]) {
     }
 
     const Summary summary = analyze(lines, topN);
+
+    if (jsonOutput) {
+        // Same numbers as the human-readable report, as machine-readable JSON.
+        std::cout << summaryToJson(summary, /*includeMessages=*/!summaryOnly);
+        return 0;
+    }
 
     std::cout << "Total lines:    " << summary.totalLines << "\n"
               << "Parsed lines:   " << summary.parsedLines << "\n"

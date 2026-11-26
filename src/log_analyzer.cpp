@@ -127,4 +127,73 @@ std::vector<LogEntry> filterByLevel(const std::vector<LogEntry>& entries, Level 
     return kept;
 }
 
+namespace {
+
+// Append `text` as a JSON string literal (with quotes), escaping the
+// characters JSON requires. Bytes >= 0x20 pass through unchanged, so UTF-8
+// text stays readable.
+void appendJsonString(std::string& out, const std::string& text) {
+    static const char hex[] = "0123456789abcdef";
+    out.push_back('"');
+    for (const unsigned char c : text) {
+        switch (c) {
+            case '"': out += "\\\""; break;
+            case '\\': out += "\\\\"; break;
+            case '\b': out += "\\b"; break;
+            case '\f': out += "\\f"; break;
+            case '\n': out += "\\n"; break;
+            case '\r': out += "\\r"; break;
+            case '\t': out += "\\t"; break;
+            default:
+                if (c < 0x20) {
+                    out += "\\u00";
+                    out.push_back(hex[(c >> 4) & 0xf]);
+                    out.push_back(hex[c & 0xf]);
+                } else {
+                    out.push_back(static_cast<char>(c));
+                }
+        }
+    }
+    out.push_back('"');
+}
+
+}  // namespace
+
+std::string summaryToJson(const Summary& summary, bool includeMessages) {
+    std::string out;
+    out += "{\n  \"total_lines\": ";
+    out += std::to_string(summary.totalLines);
+    out += ",\n  \"parsed_lines\": ";
+    out += std::to_string(summary.parsedLines);
+    out += ",\n  \"malformed_lines\": ";
+    out += std::to_string(summary.malformedLines);
+    out += ",\n  \"by_level\": {";
+    bool first = true;
+    for (Level level : {Level::Trace, Level::Debug, Level::Info,
+                        Level::Warn, Level::Error, Level::Fatal}) {
+        const auto it = summary.byLevel.find(level);
+        if (!first) out += ", ";
+        first = false;
+        appendJsonString(out, levelName(level));
+        out += ": ";
+        out += std::to_string(it == summary.byLevel.end() ? 0 : it->second);
+    }
+    out += "},\n  \"top_messages\": [";
+    if (includeMessages) {
+        bool firstMessage = true;
+        for (const auto& [message, count] : summary.topMessages) {
+            if (!firstMessage) out += ", ";
+            firstMessage = false;
+            out += "\n    {\"message\": ";
+            appendJsonString(out, message);
+            out += ", \"count\": ";
+            out += std::to_string(count);
+            out += "}";
+        }
+        if (!summary.topMessages.empty()) out += "\n  ";
+    }
+    out += "]\n}\n";
+    return out;
+}
+
 }  // namespace loganalyzer

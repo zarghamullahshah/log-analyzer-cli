@@ -16,6 +16,8 @@ most frequent messages. C++17, standard library only — no dependencies.
 - Ranks the most frequent messages, so the noisiest failure surfaces first.
 - Filters by minimum severity (`--level ERROR` keeps only errors and fatals).
 - Counts malformed lines instead of crashing on them.
+- Prints the same summary as machine-readable JSON with `--json`, for
+  scripts and pipelines.
 
 ## Build
 
@@ -31,6 +33,7 @@ make
 ./log-analyzer tests/sample.log
 ./log-analyzer --level ERROR app.log
 ./log-analyzer --top 5 --summary-only app.log
+./log-analyzer --json app.log | jq .
 tail -f app.log | ./log-analyzer
 ```
 
@@ -54,14 +57,40 @@ Most frequent messages:
   1x  Server started
 ```
 
+## JSON output
+
+`--json` prints the same summary as a single JSON object on stdout, with
+exactly the same numbers as the human-readable report:
+
+```sh
+./log-analyzer --json tests/sample.log
+```
+
+```json
+{
+  "total_lines": 10,
+  "parsed_lines": 9,
+  "malformed_lines": 1,
+  "by_level": {"TRACE": 0, "DEBUG": 1, "INFO": 4, "WARN": 1, "ERROR": 2, "FATAL": 1},
+  "top_messages": [
+    {"message": "Database connection failed", "count": 2},
+    {"message": "Server started", "count": 1}
+  ]
+}
+```
+
+It composes with the other flags: `--level` filters before analysing and
+`--summary-only` omits `top_messages`. An empty log still yields valid JSON
+with all counts at zero.
+
 ## Test
 
 ```sh
 make test
 ```
 
-Runs the dependency-free test suite in `tests/` (41 checks covering parsing,
-level handling, counting, top-message ranking and filtering).
+Runs the dependency-free test suite in `tests/` (67 checks covering parsing,
+level handling, counting, top-message ranking, filtering and JSON output).
 
 ## License
 
